@@ -9,6 +9,26 @@ describe Oystercard do
     end
   end
 
+  context '#top_up' do
+    it 'tops up the card by a value and returns the balance' do
+      oystercard.deduct(10)
+      expect { oystercard.top_up(1) }.to change { oystercard.balance }.by 1
+    end
+  end
+
+  context '#in_journey' do
+    it 'has a boolean state in_journey' do
+      expect(oystercard.in_journey?).to be false
+    end
+  end
+
+  context '#touch_in' do
+    it 'fails if balance is insufficient' do
+      expect { oystercard.touch_in }.to raise_error 'Insufficient balance'
+    end
+  end
+
+
   context 'Topped up to max balance' do
     before do
       oystercard.top_up(described_class::MAXIMUM_BALANCE)
@@ -27,32 +47,20 @@ describe Oystercard do
         expect { oystercard.deduct 3 }.to change { oystercard.balance }.by(-3)
       end
     end
-  end
 
-  context '#top_up' do
-    it 'tops up the card by a value and returns the balance' do
-      oystercard.deduct(10)
-      expect { oystercard.top_up(1) }.to change { oystercard.balance }.by 1
+    context '#touch_in' do
+      it 'changes card to be in use' do
+        expect { oystercard.touch_in }.to change { oystercard.in_journey }
+          .to true
+      end
     end
-  end
 
-  context '#in_journey' do
-    it 'has a boolean state in_journey' do
-      expect(oystercard.in_journey?).to be false
-    end
-  end
-
-  context '#touch_in' do
-    it 'changes card to be in use' do
-      expect { oystercard.touch_in }.to change { oystercard.in_journey }.to true
-    end
-  end
-
-  context '#touch_out' do
-    it 'changes card to be not in use' do
-      oystercard.touch_in
-      expect { oystercard.touch_out }.to change { oystercard.in_journey }
-        .to false
+    context '#touch_out' do
+      it 'changes card to be not in use' do
+        oystercard.touch_in
+        expect { oystercard.touch_out }.to change { oystercard.in_journey }
+          .to false
+      end
     end
   end
 end
