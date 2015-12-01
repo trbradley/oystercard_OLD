@@ -2,6 +2,8 @@ require 'oystercard'
 
 describe Oystercard do
   subject(:oystercard) { described_class.new }
+  let(:start) { double(:entry_station) }
+  let(:finish) { double(:exit_station) }
 
   context '#balance' do
     it 'had a default balance of zero' do
@@ -23,11 +25,12 @@ describe Oystercard do
 
   context '#touch_in' do
     it 'fails if balance is insufficient' do
-      expect { oystercard.touch_in }.to raise_error 'Insufficient balance'
+      expect { oystercard.touch_in(start) }
+        .to raise_error 'Insufficient balance'
     end
   end
 
-  context 'Topped up to max balance' do
+  context 'TOPPED UP TO MAX BALANCE' do
     let(:fare) { described_class::MINIMUM_CHARGE }
     before do
       oystercard.top_up(described_class::MAXIMUM_BALANCE)
@@ -43,21 +46,39 @@ describe Oystercard do
 
     context '#touch_in' do
       it 'changes card to be in use' do
-        expect { oystercard.touch_in }.to change { oystercard.in_journey }
-          .to true
+        expect { oystercard.touch_in(start) }
+          .to change { oystercard.in_journey? }.to true
+      end
+
+      it 'remembers entry station on touch in' do
+        oystercard.touch_in(start)
+        expect(oystercard.entry_station).to eq(start)
       end
     end
 
     context '#touch_out' do
       it 'changes card to be not in use' do
-        oystercard.touch_in
-        expect { oystercard.touch_out(fare) }
-          .to change { oystercard.in_journey }.to false
+        oystercard.touch_in(start)
+        expect { oystercard.touch_out(fare, finish) }
+          .to change { oystercard.in_journey? }.to false
       end
 
       it 'deducts fare from balance' do
-        expect { oystercard.touch_out(fare) }.to change { oystercard.balance }
-          .by(-fare)
+        expect { oystercard.touch_out(fare, finish) }
+          .to change { oystercard.balance }.by(-fare)
+      end
+    end
+
+    context 'journey history' do
+
+      it 'starts with empty journey history' do
+        expect(oystercard.journey_history).to eq []
+      end
+
+      it 'stores journey in journey history' do
+        oystercard.touch_in(start)
+        oystercard.touch_out(fare, finish)
+        expect(oystercard.journey_history).to include(oystercard.journey)
       end
     end
   end
