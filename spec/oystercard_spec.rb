@@ -52,7 +52,7 @@ describe Oystercard do
 
       it 'remembers entry station on touch in' do
         oystercard.touch_in(start)
-        expect(oystercard.entry_station).to eq(start)
+        expect(oystercard.journey[:entry]).to eq(start)
       end
     end
 
